@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Clássico Guloso</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+text-align:center;
+}
+
+button{
+padding:8px;
+margin:5px;
+border:none;
+background:#22c55e;
+color:white;
+border-radius:5px;
+}
+
+.excluir{
+background:red;
+}
+
+input{
+padding:8px;
+margin:5px;
+}
+
+.section{
+display:none;
+margin-top:20px;
+}
+
+table{
+margin:auto;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+td,th{
+border:1px solid white;
+padding:8px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏆 Clássico Guloso</h1>
+
+<button onclick="mostrar('historico')">Histórico</button>
+<button onclick="mostrar('add')">Adicionar Jogo</button>
+<button onclick="mostrar('artilheiros')">Artilheiros</button>
+<button onclick="mostrar('stats')">Estatísticas</button>
+
+<div id="historico" class="section">
+
+<h2>Histórico</h2>
+
+<table id="tabelaJogos">
+<tr>
+<th>Time</th>
+<th>Placar</th>
+<th>Time</th>
+<th>Técnicos</th>
+<th>Ação</th>
+</tr>
+</table>
+
+</div>
+
+<div id="add" class="section">
+
+<h2>Adicionar Jogo</h2>
+
+<input id="time1" placeholder="Time 1">
+<input id="tec1" placeholder="Técnico"><br>
+
+<input id="gols1" type="number" placeholder="Gols"><br>
+
+<input id="time2" placeholder="Time 2">
+<input id="tec2" placeholder="Técnico"><br>
+
+<input id="gols2" type="number" placeholder="Gols"><br>
+
+<button onclick="addJogo()">Salvar</button>
+
+</div>
+
+<div id="artilheiros" class="section">
+
+<h2>Artilheiros do Clássico</h2>
+
+<input id="nomeJogador" placeholder="Nome do jogador">
+<input id="golsJogador" type="number" placeholder="Gols">
+
+<button onclick="addArtilheiro()">Adicionar</button>
+
+<table id="tabelaArtilheiros">
+<tr>
+<th>Jogador</th>
+<th>Gols</th>
+<th>Ação</th>
+</tr>
+</table>
+
+</div>
+
+<div id="stats" class="section">
+
+<h2>Estatísticas</h2>
+
+<p id="jogos"></p>
+<p id="empates"></p>
+<p id="gols"></p>
+<p id="media"></p>
+
+<button onclick="calcular()">Atualizar</button>
+
+</div>
+
+<script>
+
+let jogos = JSON.parse(localStorage.getItem("classico_guloso_jogos")) || []
+let artilheiros = JSON.parse(localStorage.getItem("classico_guloso_artilheiros")) || []
+
+function mostrar(id){
+
+document.querySelectorAll(".section").forEach(s=>s.style.display="none")
+
+document.getElementById(id).style.display="block"
+
+if(id=="historico") carregarJogos()
+if(id=="artilheiros") carregarArtilheiros()
+
+}
+
+function carregarJogos(){
+
+let tabela = document.getElementById("tabelaJogos")
+
+tabela.innerHTML = `
+<tr>
+<th>Time</th>
+<th>Placar</th>
+<th>Time</th>
+<th>Técnicos</th>
+<th>Ação</th>
+</tr>
+`
+
+jogos.forEach((j,index)=>{
+
+tabela.innerHTML += `
+<tr>
+<td>${j.t1}</td>
+<td>${j.g1} x ${j.g2}</td>
+<td>${j.t2}</td>
+<td>${j.tec1} / ${j.tec2}</td>
+<td><button class="excluir" onclick="excluirJogo(${index})">🗑</button></td>
+</tr>
+`
+
+})
+
+}
+
+function addJogo(){
+
+let t1 = document.getElementById("time1").value
+let t2 = document.getElementById("time2").value
+let g1 = Number(document.getElementById("gols1").value)
+let g2 = Number(document.getElementById("gols2").value)
+let tec1 = document.getElementById("tec1").value
+let tec2 = document.getElementById("tec2").value
+
+jogos.push({t1,g1,t2,g2,tec1,tec2})
+
+localStorage.setItem("classico_guloso_jogos",JSON.stringify(jogos))
+
+alert("Jogo adicionado!")
+
+}
+
+function excluirJogo(i){
+
+jogos.splice(i,1)
+
+localStorage.setItem("classico_guloso_jogos",JSON.stringify(jogos))
+
+carregarJogos()
+
+}
+
+function carregarArtilheiros(){
+
+let tabela = document.getElementById("tabelaArtilheiros")
+
+tabela.innerHTML = `
+<tr>
+<th>Jogador</th>
+<th>Gols</th>
+<th>Ação</th>
+</tr>
+`
+
+artilheiros.forEach((a,index)=>{
+
+tabela.innerHTML += `
+<tr>
+<td>${a.nome}</td>
+<td>${a.gols}</td>
+<td><button class="excluir" onclick="excluirArtilheiro(${index})">🗑</button></td>
+</tr>
+`
+
+})
+
+}
+
+function addArtilheiro(){
+
+let nome = document.getElementById("nomeJogador").value
+let gols = Number(document.getElementById("golsJogador").value)
+
+artilheiros.push({nome,gols})
+
+localStorage.setItem("classico_guloso_artilheiros",JSON.stringify(artilheiros))
+
+carregarArtilheiros()
+
+}
+
+function excluirArtilheiro(i){
+
+artilheiros.splice(i,1)
+
+localStorage.setItem("classico_guloso_artilheiros",JSON.stringify(artilheiros))
+
+carregarArtilheiros()
+
+}
+
+function calcular(){
+
+let total = jogos.length
+let gols = 0
+let empates = 0
+
+jogos.forEach(j=>{
+
+gols += j.g1 + j.g2
+
+if(j.g1 == j.g2) empates++
+
+})
+
+document.getElementById("jogos").innerText = "Jogos: "+total
+document.getElementById("empates").innerText = "Empates: "+empates
+document.getElementById("gols").innerText = "Total de gols: "+gols
+document.getElementById("media").innerText = "Média de gols: "+(total? (gols/total).toFixed(2):0)
+
+}
+
+</script>
+
+</body>
+</html>
