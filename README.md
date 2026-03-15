@@ -5,266 +5,185 @@
 <title>Clássico Guloso</title>
 
 <style>
+
 body{
 font-family:Arial;
-background:#0f172a;
+background:#111;
 color:white;
 text-align:center;
 }
 
-button{
-padding:8px;
-margin:5px;
-border:none;
-background:#22c55e;
-color:white;
-border-radius:5px;
-}
-
-.excluir{
-background:red;
-}
-
 input{
-padding:8px;
+padding:5px;
 margin:5px;
 }
 
-.section{
-display:none;
-margin-top:20px;
+button{
+padding:6px;
+margin:5px;
+cursor:pointer;
 }
 
-table{
-margin:auto;
-border-collapse:collapse;
-margin-top:10px;
-}
-
-td,th{
-border:1px solid white;
+.jogo{
+background:#222;
+margin:5px;
 padding:8px;
 }
+
 </style>
+
 </head>
 
 <body>
 
-<h1>🏆 Clássico Guloso</h1>
+<h1>⚽ Clássico Guloso</h1>
 
-<button onclick="mostrar('historico')">Histórico</button>
-<button onclick="mostrar('add')">Adicionar Jogo</button>
-<button onclick="mostrar('artilheiros')">Artilheiros</button>
-<button onclick="mostrar('stats')">Estatísticas</button>
-
-<div id="historico" class="section">
-
-<h2>Histórico</h2>
-
-<table id="tabelaJogos">
-<tr>
-<th>Time</th>
-<th>Placar</th>
-<th>Time</th>
-<th>Técnicos</th>
-<th>Ação</th>
-</tr>
-</table>
-
-</div>
-
-<div id="add" class="section">
-
-<h2>Adicionar Jogo</h2>
+<h2>Adicionar jogo</h2>
 
 <input id="time1" placeholder="Time 1">
-<input id="tec1" placeholder="Técnico"><br>
+<input id="placar1" type="number" placeholder="Gols">
 
-<input id="gols1" type="number" placeholder="Gols"><br>
+x
 
+<input id="placar2" type="number" placeholder="Gols">
 <input id="time2" placeholder="Time 2">
-<input id="tec2" placeholder="Técnico"><br>
 
-<input id="gols2" type="number" placeholder="Gols"><br>
+<br>
 
-<button onclick="addJogo()">Salvar</button>
+<button onclick="adicionarJogo()">Adicionar jogo</button>
 
-</div>
+<h2>Jogos</h2>
 
-<div id="artilheiros" class="section">
+<div id="listaJogos"></div>
 
-<h2>Artilheiros do Clássico</h2>
+<h2>Artilheiro</h2>
 
-<input id="nomeJogador" placeholder="Nome do jogador">
-<input id="golsJogador" type="number" placeholder="Gols">
+<input id="nomeArtilheiro" placeholder="Nome do jogador">
+<input id="golsArtilheiro" type="number" placeholder="Gols">
 
-<button onclick="addArtilheiro()">Adicionar</button>
+<button onclick="salvarArtilheiro()">Salvar artilheiro</button>
 
-<table id="tabelaArtilheiros">
-<tr>
-<th>Jogador</th>
-<th>Gols</th>
-<th>Ação</th>
-</tr>
-</table>
-
-</div>
-
-<div id="stats" class="section">
+<div id="artilheiro"></div>
 
 <h2>Estatísticas</h2>
 
-<p id="jogos"></p>
-<p id="empates"></p>
-<p id="gols"></p>
-<p id="media"></p>
-
-<button onclick="calcular()">Atualizar</button>
-
-</div>
+<div id="estatisticas"></div>
 
 <script>
 
-let jogos = JSON.parse(localStorage.getItem("classico_guloso_jogos")) || []
-let artilheiros = JSON.parse(localStorage.getItem("classico_guloso_artilheiros")) || []
+let jogos = JSON.parse(localStorage.getItem("jogos")) || [];
+let artilheiro = JSON.parse(localStorage.getItem("artilheiro")) || null;
 
-function mostrar(id){
+function adicionarJogo(){
 
-document.querySelectorAll(".section").forEach(s=>s.style.display="none")
+let time1 = document.getElementById("time1").value;
+let time2 = document.getElementById("time2").value;
+let placar1 = document.getElementById("placar1").value;
+let placar2 = document.getElementById("placar2").value;
 
-document.getElementById(id).style.display="block"
+if(time1=="" || time2=="") return;
 
-if(id=="historico") carregarJogos()
-if(id=="artilheiros") carregarArtilheiros()
+let jogo = {
+time1,
+time2,
+placar1:Number(placar1),
+placar2:Number(placar2)
+};
 
-}
+jogos.push(jogo);
 
-function carregarJogos(){
+localStorage.setItem("jogos",JSON.stringify(jogos));
 
-let tabela = document.getElementById("tabelaJogos")
-
-tabela.innerHTML = `
-<tr>
-<th>Time</th>
-<th>Placar</th>
-<th>Time</th>
-<th>Técnicos</th>
-<th>Ação</th>
-</tr>
-`
-
-jogos.forEach((j,index)=>{
-
-tabela.innerHTML += `
-<tr>
-<td>${j.t1}</td>
-<td>${j.g1} x ${j.g2}</td>
-<td>${j.t2}</td>
-<td>${j.tec1} / ${j.tec2}</td>
-<td><button class="excluir" onclick="excluirJogo(${index})">🗑</button></td>
-</tr>
-`
-
-})
+mostrarJogos();
+atualizarEstatisticas();
 
 }
 
-function addJogo(){
+function mostrarJogos(){
 
-let t1 = document.getElementById("time1").value
-let t2 = document.getElementById("time2").value
-let g1 = Number(document.getElementById("gols1").value)
-let g2 = Number(document.getElementById("gols2").value)
-let tec1 = document.getElementById("tec1").value
-let tec2 = document.getElementById("tec2").value
+let lista = document.getElementById("listaJogos");
 
-jogos.push({t1,g1,t2,g2,tec1,tec2})
+lista.innerHTML="";
 
-localStorage.setItem("classico_guloso_jogos",JSON.stringify(jogos))
+jogos.forEach((jogo,index)=>{
 
-alert("Jogo adicionado!")
+lista.innerHTML+=`
+<div class="jogo">
+${jogo.time1} ${jogo.placar1} x ${jogo.placar2} ${jogo.time2}
+
+<br>
+
+<button onclick="excluirJogo(${index})">Excluir</button>
+
+</div>
+`;
+
+});
 
 }
 
 function excluirJogo(i){
 
-jogos.splice(i,1)
+jogos.splice(i,1);
 
-localStorage.setItem("classico_guloso_jogos",JSON.stringify(jogos))
+localStorage.setItem("jogos",JSON.stringify(jogos));
 
-carregarJogos()
-
-}
-
-function carregarArtilheiros(){
-
-let tabela = document.getElementById("tabelaArtilheiros")
-
-tabela.innerHTML = `
-<tr>
-<th>Jogador</th>
-<th>Gols</th>
-<th>Ação</th>
-</tr>
-`
-
-artilheiros.forEach((a,index)=>{
-
-tabela.innerHTML += `
-<tr>
-<td>${a.nome}</td>
-<td>${a.gols}</td>
-<td><button class="excluir" onclick="excluirArtilheiro(${index})">🗑</button></td>
-</tr>
-`
-
-})
+mostrarJogos();
+atualizarEstatisticas();
 
 }
 
-function addArtilheiro(){
+function atualizarEstatisticas(){
 
-let nome = document.getElementById("nomeJogador").value
-let gols = Number(document.getElementById("golsJogador").value)
-
-artilheiros.push({nome,gols})
-
-localStorage.setItem("classico_guloso_artilheiros",JSON.stringify(artilheiros))
-
-carregarArtilheiros()
-
-}
-
-function excluirArtilheiro(i){
-
-artilheiros.splice(i,1)
-
-localStorage.setItem("classico_guloso_artilheiros",JSON.stringify(artilheiros))
-
-carregarArtilheiros()
-
-}
-
-function calcular(){
-
-let total = jogos.length
-let gols = 0
-let empates = 0
+let totalJogos = jogos.length;
+let totalGols = 0;
 
 jogos.forEach(j=>{
 
-gols += j.g1 + j.g2
+totalGols += j.placar1 + j.placar2;
 
-if(j.g1 == j.g2) empates++
+});
 
-})
+let media = totalJogos ? (totalGols/totalJogos).toFixed(2) : 0;
 
-document.getElementById("jogos").innerText = "Jogos: "+total
-document.getElementById("empates").innerText = "Empates: "+empates
-document.getElementById("gols").innerText = "Total de gols: "+gols
-document.getElementById("media").innerText = "Média de gols: "+(total? (gols/total).toFixed(2):0)
+document.getElementById("estatisticas").innerHTML=`
+
+Jogos: ${totalJogos} <br>
+Gols: ${totalGols} <br>
+Média de gols: ${media}
+
+`;
 
 }
+
+function salvarArtilheiro(){
+
+let nome = document.getElementById("nomeArtilheiro").value;
+let gols = document.getElementById("golsArtilheiro").value;
+
+artilheiro = {nome,gols};
+
+localStorage.setItem("artilheiro",JSON.stringify(artilheiro));
+
+mostrarArtilheiro();
+
+}
+
+function mostrarArtilheiro(){
+
+if(!artilheiro) return;
+
+document.getElementById("artilheiro").innerHTML=`
+
+🏆 ${artilheiro.nome} - ${artilheiro.gols} gols
+
+`;
+
+}
+
+mostrarJogos();
+atualizarEstatisticas();
+mostrarArtilheiro();
 
 </script>
 
